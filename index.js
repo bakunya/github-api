@@ -5,7 +5,12 @@ const express = require('express')
 const fs_promises = require('fs/promises')
 const ratelimit = require('express-rate-limit')
 
+/** config variable */
+const IS_DEVELOPMENT = true
 const GITHUB_USERNAME = 'bakunya'
+const TIME_REVALIDATED_MS = 86400000
+const CORS_WHITELIST = ['http://localhost:3000']
+/** end config variable */
 
 const app = express()
 const limiter = ratelimit({
@@ -66,7 +71,7 @@ async function getFromLocalFile() {
 
 function shouldRevalidate(currentScrape) {
     const lastScrape = new Date(currentScrape)
-    const timeToScrapeAgain = new Date(lastScrape.getTime() + 86400000) // 1 day
+    const timeToScrapeAgain = new Date(lastScrape.getTime() + TIME_REVALIDATED_MS) // 1 day
     const dateNow = new Date(Date.now())
     return dateNow.getTime() > timeToScrapeAgain.getTime()
 }
@@ -84,7 +89,7 @@ async function bootstrappingAllScrapeProcess() {
 
 async function main() {
     app.use(limiter)
-    app.use(cors(delegate(['http://localhost:3000'], true)))
+    app.use(cors(delegate(CORS_WHITELIST, IS_DEVELOPMENT)))
 
     app.get('/', async (req, res) => {
         try {
